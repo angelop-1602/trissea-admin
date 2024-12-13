@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import Button from '@mui/material/Button';
@@ -38,7 +36,7 @@ export default function Page(): React.JSX.Element {
             <DriverCard />
           </Grid>
           <Grid item xs={12}>
-            <DriverReview />
+            <DriverReview driverId={''} />
           </Grid>
         </Grid>
       </Grid>

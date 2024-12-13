@@ -18,9 +18,11 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import dayjs from 'dayjs';
+import { CardHeader, Divider, Card, Link } from '@mui/material';
 
 import { FetchTripsData } from './fetchtrips-data';
 import { TripHeader } from './trips-header';
+import { paths } from '@/paths';
 
 interface Data {
   id: string;
@@ -37,6 +39,8 @@ interface Data {
   canceled: boolean;
   driverName: string | null;
   history: unknown;
+  arrivedToFinalDestination: boolean;
+  started: boolean;
 }
 
 interface RowProps {
@@ -67,10 +71,10 @@ function Row({ row }: RowProps): React.ReactElement {
           <Typography>{row.passengerCount}</Typography>
         </TableCell>
         <TableCell align="center">
-          {row.accepted && !row.arrived && !row.canceled ? (
+          {row.accepted && !row.canceled && row.tripCompleted && row.arrivedToFinalDestination ? (
+            <Chip label="Completed" color="primary" />
+          ) : row.accepted && !row.arrived && !row.canceled ? (
             <Chip label="Ongoing" color="info" />
-          ) : row.accepted && row.arrived && !row.canceled ? (
-            <Chip label="Completed" color="success" />
           ) : (
             <Chip label="Canceled" color="error" />
           )}
@@ -151,9 +155,9 @@ export function RecentTrips(): React.ReactElement {
       const tripsData = await FetchTripsData(date);
       const filteredTrips = tripsData.filter((trip) => {
         if (status === 'Ongoing') {
-          return trip.accepted && !trip.arrived;
+          return trip.accepted && !trip.canceled && !trip.tripCompleted;
         } else if (status === 'Completed') {
-          return trip.accepted && trip.arrived;
+          return trip.accepted && trip.arrivedToFinalDestination && trip.tripCompleted;
         } else if (status === 'Canceled') {
           return trip.canceled;
         }
@@ -166,7 +170,12 @@ export function RecentTrips(): React.ReactElement {
         if (dayjs(a.currentDate).isAfter(dayjs(b.currentDate))) return 1;
         return 0;
       });
-      setTrips(sortedTrips.map(trip => ({ ...trip, currentDate: trip.currentDate || '' })));
+      setTrips(sortedTrips.map(trip => ({
+        ...trip,
+        currentDate: trip.currentDate || '',
+        arrivedToFinalDestination: trip.arrivedToFinalDestination as boolean,
+        started: trip.started || false  // Ensure 'started' is always set as boolean
+      })));      
     } catch (fetchError) {
       setError('Error fetching data.');
     }
@@ -189,40 +198,45 @@ export function RecentTrips(): React.ReactElement {
 
   return (
     <>
-      <TripHeader onDateChange={handleDateChange} onFilterChange={handleFilterChange} />
-      <TableContainer component={Paper}>
-        {error ? (
-          <Alert severity="error">{error}</Alert>
-        ) : (
-          <>
-            <Table aria-label="collapsible table">
-              <TableHead>
-                <TableRow>
-                  <TableCell />
-                  <TableCell align="center">Trip Id</TableCell>
-                  <TableCell align="center"> </TableCell>
-                  <TableCell align="center">Distance (km)</TableCell>
-                  <TableCell align="center">Cost (₱)</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {trips.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((trip) => (
-                  <Row key={trip.id} row={trip} />
-                ))}
-              </TableBody>
-            </Table>
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={trips.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </>
-        )}
-      </TableContainer>
+      <Card>
+      <Link href={paths.dashboard.recenttrips} style={{ textDecoration: 'none', color: 'inherit' }}><CardHeader title="Trips" /> </Link>
+        <Divider />
+        <TripHeader onDateChange={handleDateChange} onFilterChange={handleFilterChange} />
+        <TableContainer component={Paper}>
+          {error ? (
+            <Alert severity="error">{error}</Alert>
+          ) : (
+            <>
+              <Table aria-label="collapsible table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell />
+                    <TableCell align="center">Trip Id</TableCell>
+                    <TableCell align="center">Passenger/s</TableCell>
+                    <TableCell align="center">Status</TableCell>
+                    <TableCell align="center">Distance (km)</TableCell>
+                    <TableCell align="center">Cost (₱)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {trips.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((trip) => (
+                    <Row key={trip.id} row={trip} />
+                  ))}
+                </TableBody>
+              </Table>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={trips.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </>
+          )}
+        </TableContainer>
+      </Card>
     </>
   );
 }

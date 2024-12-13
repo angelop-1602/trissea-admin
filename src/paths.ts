@@ -10,7 +10,9 @@ export const paths = {
     driverProfile: `/dashboard/driver-profile?id=`,
     passengerProfile: '/dashboard/passenger-profile?id=',
     driverCompare: '/dashboard/driver-compare?id=',
-    toda: '/dashboard/toda'
+    toda: '/dashboard/toda',
+    recenttrips :'/dashboard/trips',
+    reports:'/dashboard/reports'
   },
   components:{
     driverPending: '/dashboard/driver-pending',

@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import StarIcon from '@mui/icons-material/Star';
@@ -13,12 +14,19 @@ import {
   Typography,
   Pagination,
 } from '@mui/material';
-import { collection, getDocs, query, where } from 'firebase/firestore/lite';
+import { collection, getDocs } from 'firebase/firestore/lite';
 
 import { db } from '../../firebase/FirebaseConfig';
 
-export function DriverReview(): React.ReactElement {
-  const [reviews, setReviews] = useState([]);
+// Define the Review interface
+interface Review {
+  passengerName: string;
+  feedback: number;
+  comment: string;
+}
+
+export function DriverReview({ driverId }: { driverId: string }): React.ReactElement {
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [page, setPage] = useState(1);
   const reviewsPerPage = 5; // Number of reviews to display per page
 
@@ -28,16 +36,33 @@ export function DriverReview(): React.ReactElement {
       const todaTripsCollection = collection(db, 'todaTrips');
 
       const tripsSnapshot = await getDocs(tripsCollection);
-      const tripsData = tripsSnapshot.docs.map(doc => doc.data());
+      const tripsData = tripsSnapshot.docs
+        .map(doc => doc.data())
+        .filter((data: any) => data.driverId === driverId);
 
       const todaTripsSnapshot = await getDocs(todaTripsCollection);
-      const todaTripsData = todaTripsSnapshot.docs.map(doc => doc.data());
+      const todaTripsData = todaTripsSnapshot.docs
+        .map(doc => doc.data())
+        .filter((data: any) => data.driverId === driverId);
 
-      const allReviewsData = [...tripsData, ...todaTripsData];
+      // Combine and filter the fetched data to only include valid reviews
+      const allReviewsData: Review[] = [
+        ...tripsData.map((data: any) => ({
+          passengerName: data.passengerName || '',
+          feedback: data.feedback || 0,
+          comment: data.comment || '',
+        })),
+        ...todaTripsData.map((data: any) => ({
+          passengerName: data.passengerName || '',
+          feedback: data.feedback || 0,
+          comment: data.comment || '',
+        })),
+      ].filter(review => review.feedback > 0 || review.comment.trim() !== '');
+
       setReviews(allReviewsData);
     };
     void fetchReviews();
-  }, []);
+  }, [driverId]);
 
   const [expanded, setExpanded] = useState<string | false>('');
 
@@ -60,45 +85,51 @@ export function DriverReview(): React.ReactElement {
       </Stack>
       <Divider />
       <CardContent>
-        {currentReviews.map((review, index) => (
-          <Accordion
-            key={index}
-            expanded={expanded === `review${index}`}
-            onChange={handleChange(`review${index}`)}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon sx={{ fontSize: 40 }} />}
-              aria-controls={`review${index}-content`}
-              id={`review${index}-header`}
+        {currentReviews.length === 0 ? (
+          <Typography variant="body1" color="text.secondary">
+            No reviews available for this driver.
+          </Typography>
+        ) : (
+          currentReviews.map((review, index) => (
+            <Accordion
+              key={index}
+              expanded={expanded === `review${index}`}
+              onChange={handleChange(`review${index}`)}
             >
-              <Grid container alignItems="center">
-                <Grid item xs={6}>
-                  <Typography variant="h6">{review.passengerName}</Typography>
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon sx={{ fontSize: 40 }} />}
+                aria-controls={`review${index}-content`}
+                id={`review${index}-header`}
+              >
+                <Grid container alignItems="center">
+                  <Grid item xs={6}>
+                    <Typography variant="h6">{review.passengerName}</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Stack direction="row" alignItems="center" justifyContent="flex-end">
+                      <StarIcon htmlColor="#FFD700" />
+                      <Typography variant="subtitle1" color="text.secondary">
+                        {review.feedback}/5
+                      </Typography>
+                    </Stack>
+                  </Grid>
                 </Grid>
-                <Grid item xs={6}>
-                  <Stack direction="row" alignItems="center" justifyContent="flex-end">
-                    <StarIcon htmlColor="#FFD700" />
-                    <Typography variant="subtitle1" color="text.secondary">
-                      {review.feedback}/5
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Typography variant="h6" gutterBottom>
+                      Comments:
                     </Typography>
-                  </Stack>
+                    <Typography variant="body1" color="text.secondary">
+                      {review.comment}
+                    </Typography>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
-                    Comments:
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    {review.comment}
-                  </Typography>
-                </Grid>
-              </Grid>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+              </AccordionDetails>
+            </Accordion>
+          ))
+        )}
       </CardContent>
       <Grid container justifyContent="center" sx={{ my: 2 }}>
         <Pagination

@@ -36,15 +36,21 @@ export function PassengerTable({ searchQuery = '' }: PassengerTableProps): React
   const [filteredPassengers, setFilteredPassengers] = React.useState<Passenger[]>([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [errorText, setErrorText] = React.useState<string | null>(null);
   const router = useRouter();
 
   React.useEffect(() => {
     const fetchPassengers = async () => {
-      const passengersCollection = collection(db, 'passengers');
-      const passengersQuery = query(passengersCollection);
-      const snapshot = await getDocs(passengersQuery);
-      const passengersData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Passenger);
-      setPassengers(passengersData);
+      try {
+        const passengersCollection = collection(db, 'passengers');
+        const passengersQuery = query(passengersCollection);
+        const snapshot = await getDocs(passengersQuery);
+        const passengersData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Passenger);
+        setPassengers(passengersData);
+      } catch (error: any) {
+        setErrorText(`Error fetching passengers: ${error.message}`);
+        console.error('Error fetching passengers:', error);
+      }
     };
 
     void fetchPassengers();
@@ -54,9 +60,7 @@ export function PassengerTable({ searchQuery = '' }: PassengerTableProps): React
     const filtered = passengers.filter((passenger) => {
       const fullNameMatch =
         passenger.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        passenger.firstName.toUpperCase().includes(searchQuery.toUpperCase()) ||
         passenger.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        passenger.lastName.toUpperCase().includes(searchQuery.toUpperCase()) ||
         passenger.passengerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         passenger.email.toLowerCase().includes(searchQuery.toLowerCase());
       return fullNameMatch;
@@ -97,7 +101,11 @@ export function PassengerTable({ searchQuery = '' }: PassengerTableProps): React
   return (
     <Card>
       <Box sx={{ overflowX: 'auto' }}>
-        {filteredPassengers.length === 0 ? (
+        {errorText ? (
+          <Typography variant="h5" align="center" color="error">
+            {errorText}
+          </Typography>
+        ) : filteredPassengers.length === 0 ? (
           <Typography variant="h5" align="center" color="textSecondary">
             No passengers match the search criteria.
           </Typography>

@@ -16,9 +16,12 @@ interface FirestoreData {
   canceled: boolean;
   driverName: string | null;
   history: any; // Change this to the appropriate type if known
+  arrivedToFinalDestination: boolean; // Ensure this property is included
+  started: boolean;
 }
 
 interface Data extends Omit<FirestoreData, 'currentDate'> {
+  started: boolean;
   currentDate: string | null;
 }
 

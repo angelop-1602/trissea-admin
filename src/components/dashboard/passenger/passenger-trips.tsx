@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { CircularProgress, OutlinedInput } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -10,7 +10,6 @@ import Chip from '@mui/material/Chip';
 import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
@@ -20,10 +19,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import { MagnifyingGlass as MagnifyingGlassIcon } from '@phosphor-icons/react/dist/ssr/MagnifyingGlass';
 import { collection, getDocs, query, where } from 'firebase/firestore/lite';
 
-import { db } from '../firebase/FirebaseConfig';
+db
 
 interface Data {
   id: string;
@@ -39,40 +37,38 @@ interface Data {
   arrived: boolean;
   canceled: boolean;
   driverName: string | null;
-  history: string[];
-  feedback: string | number;
+  history: unknown;
+  feedback: number;
 }
 
 interface RowProps {
   row: Data;
 }
 
-function transformData(doc: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData>): Data {
-  const data = doc.data() as Record<string, unknown>;
-  const currentDate = data.currentDate ? (data.currentDate as Date).toDate() : new Date();
-
-  const trip: Data = {
+function transformData(doc: any): Data {
+  const data = doc.data();
+  const currentDate = data.currentDate ? data.currentDate.toDate() : new Date();
+  return {
     id: doc.id,
-    passengerName: data.passengerName ? (data.passengerName as string) : '',
-    passengerCount: data.passengerCount !== undefined ? (data.passengerCount as number) : 0,
-    tripCompleted: Boolean(data.tripCompleted),
-    distance: data.distance !== undefined ? (data.distance as number) : 0,
-    cost: data.cost !== undefined ? (data.cost as number) : 0,
-    currentDate: currentDate.toLocaleString(),
-    pickupAddress: data.pickupAddress ? (data.pickupAddress as string) : '',
-    destinationAddress: data.destinationAddress ? (data.destinationAddress as string) : '',
-    accepted: Boolean(data.accepted),
-    arrived: Boolean(data.arrived),
-    canceled: Boolean(data.canceled),
-    driverName: data.driverName ? (data.driverName as string) : null,
-    history: data.history ? (data.history as string[]) : [],
-    feedback: data.feedback !== undefined ? (data.feedback as string | number) : 0,
+    passengerName: data.passengerName || '',
+    passengerCount: data.passengerCount || 0,
+    tripCompleted: data.tripCompleted || false,
+    distance: data.distance || 0,
+    cost: data.cost || 0,
+    currentDate,
+    pickupAddress: data.pickupAddress || '',
+    destinationAddress: data.destinationAddress || '',
+    accepted: data.accepted || false,
+    arrived: data.arrived || false,
+    canceled: data.canceled || false,
+    driverName: data.driverName || null,
+    history: data.history || undefined,
+    feedback: data.feedback || 0,
   };
-
-  return trip;
 }
+
 function Row({ row }: RowProps): React.ReactElement {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = React.useState(false);
 
   return (
     <>
@@ -117,6 +113,10 @@ function Row({ row }: RowProps): React.ReactElement {
               </Typography>
               <Table size="small" aria-label="purchases">
                 <TableBody>
+                  <TableRow key={`${row.id}-details-passenger`}>
+                    <TableCell>Passenger Name:</TableCell>
+                    <TableCell>{row.passengerName}</TableCell>
+                  </TableRow>
                   <TableRow key={`${row.id}-details-driver`}>
                     <TableCell>Driver Name:</TableCell>
                     <TableCell>{row.driverName}</TableCell>
@@ -131,7 +131,7 @@ function Row({ row }: RowProps): React.ReactElement {
                   </TableRow>
                   <TableRow key={`${row.id}-details-date`}>
                     <TableCell>Date:</TableCell>
-                    <TableCell>{row.currentDate}</TableCell>
+                    <TableCell>{new Date(row.currentDate).toDateString()}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -143,24 +143,35 @@ function Row({ row }: RowProps): React.ReactElement {
   );
 }
 
-export function PassengerTrip(): React.ReactElement {
-  const [trips, setTrips] = useState<Data[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+import TablePagination from '@mui/material/TablePagination';
+import { db } from '../firebase/FirebaseConfig';
+
+export function PassengerTrips(): React.ReactElement {
+  const [trips, setTrips] = React.useState<Data[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const searchParams = useSearchParams();
-  const passengerId = searchParams.get('id');
+  const passengerid = searchParams.get('id');
 
   const fetchData = async (): Promise<void> => {
-    if (!passengerId) return;
+    if (!passengerid) return;
     setLoading(true);
     try {
       const tripsCollection = collection(db, 'trips');
-      const q = query(tripsCollection, where('passengerId', '==', passengerId));
+      const todaTripsCollection = collection(db, 'todaTrips');
+      const q = query(tripsCollection, where('driverId', '==', passengerid));
+      const todaQ = query(todaTripsCollection, where('driverId', '==', passengerid));
       const querySnapshot = await getDocs(q);
+      const todaQuerySnapshot = await getDocs(todaQ);
       const tripsData: Data[] = [];
       querySnapshot.forEach((doc) => {
+        const trip = transformData(doc);
+        tripsData.push(trip);
+      });
+      todaQuerySnapshot.forEach((doc) => {
         const trip = transformData(doc);
         tripsData.push(trip);
       });
@@ -172,12 +183,18 @@ export function PassengerTrip(): React.ReactElement {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     void fetchData();
-  }, [passengerId]);
+  }, [passengerid]);
 
-  // Function to filter trips based on search query
-  const filteredTrips = trips.filter((trip) => trip.id.toLowerCase().includes(searchQuery.toLowerCase()));
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   return (
     <>
@@ -192,28 +209,18 @@ export function PassengerTrip(): React.ReactElement {
         </Alert>
       ) : null}
       <Card>
-        <Stack sx={{ p: 2 }} direction="row" alignItems="center" justifyContent="space-between">
-          <Typography variant="h3">Passenger trips</Typography>
-          <OutlinedInput
-            fullWidth
-            placeholder="Search Trip ID"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-            }}
-            startAdornment={
-              <InputAdornment position="end">
-                <MagnifyingGlassIcon fontSize="var(--icon-fontSize-md)" />
-              </InputAdornment>
-            }
-            sx={{ maxWidth: '500px', boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)' }}
-          />
+        <Stack sx={{ m: 2 }}>
+          <Typography variant="h3">Trips</Typography>
         </Stack>
         <Divider />
         <TableContainer component={Paper}>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
               <CircularProgress />
+            </Box>
+          ) : trips.length === 0 ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <Typography variant="h6">No trips available yet.</Typography>
             </Box>
           ) : (
             <Table aria-label="collapsible table">
@@ -228,13 +235,21 @@ export function PassengerTrip(): React.ReactElement {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredTrips.map((trip) => (
+                {trips.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((trip) => (
                   <Row key={trip.id} row={trip} />
                 ))}
               </TableBody>
             </Table>
           )}
         </TableContainer>
+        <TablePagination
+          component="div"
+          count={trips.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </Card>
     </>
   );

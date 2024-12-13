@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import Button from '@mui/material/Button';
@@ -7,17 +6,15 @@ import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { ArrowUDownLeft } from '@phosphor-icons/react/dist/ssr/ArrowUDownLeft';
-
 import { paths } from '@/paths';
-import PassengerCard from '@/components/dashboard/passenger/passenger-card';
-import { PassengerTrips } from '@/components/dashboard/passenger/passenger-trips';
+import { Reports } from '@/components/dashboard/overview/reports';
 
 export default function Page(): React.JSX.Element {
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={12}>
+    <Grid container direction="column" spacing={2} sx={{ marginBottom: '20px' }}>
+      <Grid item xs={12} sx={{ marginBottom: '20px' }}>
         <Stack direction="row" spacing={1} alignItems="center">
-          <Link href={paths.dashboard.passenger}>
+          <Link href={paths.dashboard.overview}>
             <Button
               variant="contained"
               size="large"
@@ -27,23 +24,11 @@ export default function Page(): React.JSX.Element {
               Back
             </Button>
           </Link>
-          <Typography variant="h4">Passenger Profile</Typography>
+          <Typography variant="h4">Reported Driver</Typography>
         </Stack>
       </Grid>
-      <Grid item xs={12} md={6} lg={4}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-          <PassengerCard />
-          </Grid>
-          <Grid item xs={12} />
-        </Grid>
-      </Grid>
-      <Grid item xs={12} md={6} lg={8}>
-        <Grid container spacing={2}>
-          <Grid item xs={12}>
-            <PassengerTrips />
-          </Grid>
-        </Grid>
+      <Grid item xs={12} lg={8} xl={6}>
+        <Reports />
       </Grid>
     </Grid>
   );

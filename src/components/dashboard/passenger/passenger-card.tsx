@@ -21,44 +21,49 @@ export interface Passenger {
 export default function PassengerCard(): React.JSX.Element {
   const searchParams = useSearchParams();
   const passengerId = searchParams.get('id');
-
-  // Define state variables
   const [passenger, setPassenger] = useState<Passenger | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorText, setErrorText] = useState<string | null>(null);
 
-  // Function to fetch passenger details
-  async function fetchPassengerDetails(id: string | null): Promise<void> {
-    if (id) {
+  useEffect(() => {
+    const fetchPassenger = async () => {
       try {
-        const passengerDocRef = doc(collection(db, 'passengers'), id);
-        const passengerDocSnapshot = await getDoc(passengerDocRef);
+        if (!passengerId) {
+          setErrorText('No passenger ID found in the URL');
+          return;
+        }
 
-        if (passengerDocSnapshot.exists()) {
-          const passengerData = passengerDocSnapshot.data() as Passenger;
+        const passengersCollectionRef = collection(db, 'passengers');
+        const passengerRef = doc(passengersCollectionRef, passengerId);
+        const passengerDoc = await getDoc(passengerRef);
+        if (passengerDoc.exists()) {
+          const passengerData = passengerDoc.data() as Passenger;
           setPassenger(passengerData);
         } else {
-          setError('Passenger not found.');
+          setErrorText('Passenger not found');
         }
-      } catch (error) {
-        setError(`Error fetching passenger details: ${  error.message}`);
+      } catch (error: any) {
+        setErrorText(`Error fetching passenger data: ${error.message}`);
       } finally {
         setLoading(false);
       }
-    }
-  }
+    };
 
-  useEffect(() => {
-    void fetchPassengerDetails(passengerId);
+    void fetchPassenger();
   }, [passengerId]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
-  if (error) {
-    return <div>Error: {error}</div>;
+  if (errorText) {
+    return <div>Error: {errorText}</div>;
   }
+
+  if (!passengerId) {
+    return <div>No passenger ID found in the URL</div>;
+  }
+
   return (
     <Stack spacing={3}>
       <Card>
@@ -68,7 +73,7 @@ export default function PassengerCard(): React.JSX.Element {
               <Avatar sx={{ height: '80px', width: '80px' }} />
             </div>
             <Stack spacing={1} sx={{ textAlign: 'center' }}>
-              <Typography variant="h5">{`${passenger?.passengerName}`}</Typography>
+              <Typography variant="h5">{passenger?.passengerName}</Typography>
               <Typography color="text.secondary" variant="body2">
                 {passenger?.email}
               </Typography>

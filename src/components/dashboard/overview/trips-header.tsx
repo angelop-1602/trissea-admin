@@ -1,10 +1,7 @@
 import * as React from 'react';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
-import Hidden from '@mui/material/Hidden';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import CustomDatePicker from './custom-date-picker';
 import dayjs from 'dayjs';
 
 export interface TripHeaderProps {
@@ -31,7 +28,7 @@ export function TripHeader({ onDateChange, onFilterChange }: TripHeaderProps): R
   return (
     <Grid container spacing={3}>
       <Grid item xs={8}>
-      <Grid container  spacing={2} sx={{m:2}}>
+        <Grid container spacing={2} sx={{ m: 2 }}>
           <Grid item>
             <Button
               variant={activeButton === 'Ongoing' ? 'contained' : 'outlined'}
@@ -61,18 +58,12 @@ export function TripHeader({ onDateChange, onFilterChange }: TripHeaderProps): R
           </Grid>
         </Grid>
       </Grid>
-      <Grid item xs={4}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DatePicker
-            label="MM/DD/YYYY"
-            sx={{ margin: '2rem' }}
-            value={selectedDate}
-            onChange={(newDate: unknown) => {
-              handleDateChange(newDate as dayjs.Dayjs | null);
-            }}
-          />
-        </LocalizationProvider>
-      </Grid>
+      {/* <Grid item xs={4}>
+        <CustomDatePicker
+          selectedDate={selectedDate}
+          onDateChange={handleDateChange}
+        />
+      </Grid> */}
     </Grid>
   );
 }

@@ -9,10 +9,11 @@ export default function Page(): React.JSX.Element {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const handleSnackbar = (message) => {
+  const handleSnackbar = (message: string) => {
     setSnackbarMessage(message);
     setSnackbarOpen(true);
   };
+
 
   const handleCloseSnackbar = () => {
     setSnackbarOpen(false);
@@ -23,7 +24,7 @@ export default function Page(): React.JSX.Element {
       <Grid item xs={16}>
         <Compare handleSnackbar={handleSnackbar} />
       </Grid>
-            <Snackbar
+      <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
         open={snackbarOpen}
         onClose={handleCloseSnackbar}

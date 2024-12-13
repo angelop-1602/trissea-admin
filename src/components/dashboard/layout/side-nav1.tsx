@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -8,11 +7,12 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+
 import type { NavItemConfig } from '@/types/nav';
 import { paths } from '@/paths';
 import { isNavItemActive } from '@/lib/is-nav-item-active';
 import { Logo } from '@/components/core/logo';
-import { Special } from './special';
+
 import { navItems } from './config';
 import { navIcons } from './nav-icons';
 
@@ -60,7 +60,7 @@ export function SideNav(): React.JSX.Element {
           <Logo color="light" height={200} width={200} />
         </Box>
 
-        <Box
+        {/* <Box
           sx={{
             alignItems: 'center',
             backgroundColor: 'var(--mui-palette-neutral-950)',
@@ -72,9 +72,18 @@ export function SideNav(): React.JSX.Element {
           }}
         >
           <Box sx={{ flex: '1 1 auto' }}>
-            <Special />
+            <Typography variant="h5" margin={1}>
+            Special Trips
+            </Typography>
+            <FormControl component="fieldset">
+              <FormGroup aria-label="position" >
+                <FormControlLabel value="top" control={<Switch />} label="Night" labelPlacement="start" />
+                <FormControlLabel value="top" control={<Switch/>} label="Rainy" labelPlacement="start" />
+                <FormControlLabel value="top" control={<Switch/>} label="Top" labelPlacement="start" />
+              </FormGroup>
+            </FormControl>
           </Box>
-        </Box>
+        </Box> */}
       </Stack>
       <Divider sx={{ borderColor: 'var(--mui-palette-neutral-700)' }} />
       <Box component="nav" sx={{ flex: '1 1 auto', p: '12px' }}>

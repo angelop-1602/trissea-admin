@@ -8,7 +8,7 @@ import { CacheProvider as DefaultCacheProvider } from '@emotion/react';
 
 interface Registry {
   cache: EmotionCache;
-  flush: () => { name: string; isGlobal: boolean }[];
+  flush: () => { name: string; isGlobal: boolean }[]; 
 }
 
 export interface NextAppDirEmotionCacheProviderProps {
@@ -60,10 +60,10 @@ export default function NextAppDirEmotionCacheProvider(props: NextAppDirEmotionC
       const style = registry.cache.inserted[name];
 
       if (typeof style !== 'boolean') {
-        if (isGlobal) {
+        if (isGlobal && style !== undefined) {  // Check if style is defined
           globals.push({ name, style });
-        } else {
-          styles += style;
+        } else if (style !== undefined) {
+          styles += style;  // Only use style if it is defined
           dataEmotionAttribute += ` ${name}`;
         }
       }

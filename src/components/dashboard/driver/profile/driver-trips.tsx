@@ -1,3 +1,4 @@
+"use client";
 import * as React from 'react';
 import { useSearchParams } from 'next/navigation';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -160,10 +161,17 @@ export function DriverTrips(): React.ReactElement {
     setLoading(true);
     try {
       const tripsCollection = collection(db, 'trips');
+      const todaTripsCollection = collection(db, 'todaTrips');
       const q = query(tripsCollection, where('driverId', '==', driverId));
+      const todaQ = query(todaTripsCollection, where('driverId', '==', driverId));
       const querySnapshot = await getDocs(q);
+      const todaQuerySnapshot = await getDocs(todaQ);
       const tripsData: Data[] = [];
       querySnapshot.forEach((doc) => {
+        const trip = transformData(doc);
+        tripsData.push(trip);
+      });
+      todaQuerySnapshot.forEach((doc) => {
         const trip = transformData(doc);
         tripsData.push(trip);
       });
@@ -209,6 +217,10 @@ export function DriverTrips(): React.ReactElement {
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
               <CircularProgress />
+            </Box>
+          ) : trips.length === 0 ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+              <Typography variant="h6">No trips available yet.</Typography>
             </Box>
           ) : (
             <Table aria-label="collapsible table">

@@ -13,6 +13,8 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { collection, getDocs, query, where } from 'firebase/firestore/lite';
 import { db } from '../firebase/FirebaseConfig';
+import { useRouter } from 'next/navigation';
+import { paths } from '@/paths';
 
 interface Driver {
   id: string;
@@ -25,6 +27,7 @@ interface Driver {
 
 export function DriverReject(): React.ReactElement {
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async (): Promise<void> => {
@@ -41,7 +44,9 @@ export function DriverReject(): React.ReactElement {
 
     void fetchData();
   }, []);
-
+  const handleViewDriver = (driverId: string) => {
+    router.push(`${paths.dashboard.driverCompare}${driverId}`);
+  };
   return (
     <Card>
       <Box sx={{ overflowX: 'auto' }}>
@@ -73,7 +78,7 @@ export function DriverReject(): React.ReactElement {
                 <TableCell align="center">{driver.vehicleNumber}</TableCell>
                 <TableCell align="center">{driver.contactNumber}</TableCell>
                 <TableCell align="center">
-                  <Button>View Profile</Button>
+                <Button onClick={() => { handleViewDriver(driver.id); }}>View Driver</Button>
                 </TableCell>
               </TableRow>
             ))}

@@ -7,16 +7,19 @@ import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
-
+import Link from '@mui/material/Link';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { collection, getDocs } from 'firebase/firestore/lite';
 import { db } from '../firebase/FirebaseConfig';
+import { paths } from '@/paths';
+
 
 interface Report {
-  passengerName: string;
-  driverName: string;
-  reportComment: string;
-  index: number;
+  caseNumber: string;
+  fullName: string;
+  reportReason: string;
+  reportedAt: string;
+  vehicleNumber: string;
 }
 
 export function Reports(): React.ReactElement {
@@ -25,25 +28,22 @@ export function Reports(): React.ReactElement {
 
   useEffect(() => {
     const fetchReports = async () => {
-      const tripsRef = collection(db, 'trips');
-      const todayTripsRef = collection(db, 'todayTrips');
+      const reportedDriversRef = collection(db, 'reportedDrivers');
 
       try {
-        // Fetch trips
-        const tripsQuerySnapshot = await getDocs(tripsRef);
-        const tripsData = tripsQuerySnapshot.docs.map((doc) => doc.data() as Report);
+        // Fetch reportedDrivers
+        const reportedDriversQuerySnapshot = await getDocs(reportedDriversRef);
+        const reportedDriversData = reportedDriversQuerySnapshot.docs.map((doc) => ({
+          caseNumber: doc.data().caseNumber,
+          fullName: doc.data().fullName,
+          reportReason: doc.data().reportReason,
+          reportedAt: doc.data().reportedAt.toDate().toString(), // Convert timestamp to string
+          vehicleNumber: doc.data().vehicleNumber,
+        }));
 
-        // Fetch todayTrips
-        const todayTripsQuerySnapshot = await getDocs(todayTripsRef);
-        const todayTripsData = todayTripsQuerySnapshot.docs.map((doc) => doc.data() as Report);
+        console.log('Fetched reportedDrivers:', reportedDriversData); // Debug log
 
-        // Concatenate trips and todayTrips
-        const allReports = [...tripsData, ...todayTripsData];
-
-        // Filter reports with reportComment
-        const reportsWithComment = allReports.filter(report => report.reportComment);
-
-        setReports(reportsWithComment);
+        setReports(reportedDriversData);
       } catch (error) {
         console.error('Error fetching reports:', error);
       } finally {
@@ -56,7 +56,7 @@ export function Reports(): React.ReactElement {
 
   return (
     <Card>
-      <CardHeader title="Reports"/>
+      <Link href={paths.dashboard.reports} style={{ textDecoration: 'none', color: 'inherit' }}><CardHeader title="Reported Drivers"/></Link>
       <Accordion>
         <div style={{ maxHeight: '38rem', overflowY: 'auto', width: '100%' }}>
           {isLoading ? (
@@ -70,15 +70,21 @@ export function Reports(): React.ReactElement {
                 <div>
                   <Accordion>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography>{report.driverName}</Typography>
+                      <Typography>{report.fullName}</Typography>
                     </AccordionSummary>
                     <AccordionDetails>
                       <div>
                         <Typography variant="body2" color="textSecondary">
-                          Passenger: {report.passengerName}
+                          Case Number: {report.caseNumber}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
-                          Comment: {report.reportComment}
+                          Report Reason: {report.reportReason}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Reported At: {report.reportedAt}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Vehicle Number: {report.vehicleNumber}
                         </Typography>
                       </div>
                     </AccordionDetails>

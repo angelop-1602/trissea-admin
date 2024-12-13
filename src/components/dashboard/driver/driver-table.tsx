@@ -108,12 +108,14 @@ export function DriverTable({ searchQuery = '' }: DriversTableProps): React.Reac
             <Table sx={{ minWidth: '800px' }}>
               <TableHead>
                 <TableRow>
+                <TableCell />
                   <TableCell />
                   <TableCell align="center">Driver Name</TableCell>
                   <TableCell align="center">Case Number</TableCell>
                   <TableCell align="center">Vehicle Number</TableCell>
                   <TableCell align="center">Contact Number</TableCell>
                   <TableCell />
+                  
                 </TableRow>
               </TableHead>
               <TableBody>
